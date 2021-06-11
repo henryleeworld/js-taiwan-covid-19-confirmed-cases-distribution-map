@@ -141,10 +141,28 @@ function showOdCharts(cityKey) {
         categories: [],
         ageKey: [],
         ageSeries: [],
+        countAvg: [],
     };
-    var skipCount = 40;
+    var skipCount = 20;
     for (k in townPool[cityKey]['days']) {
         if (--skipCount < 0) {
+            var ymd = {
+                y: k.substring(0, 4),
+                m: k.substring(4, 6),
+                d: k.substring(6, 8),
+            };
+            var theDay = new Date(ymd.y, parseInt(ymd.m) - 1, ymd.d);
+            var prevDay = new Date();
+            var sumDay = townPool[cityKey]['days'][k];
+            prevDay.setTime(theDay.getTime() - 86400000);
+            for (i = 0; i < 6; i++) {
+                var prevKey = getYMD(prevDay);
+                if (townPool[cityKey]['days'][prevKey]) {
+                    sumDay += townPool[cityKey]['days'][prevKey];
+                }
+                prevDay.setTime(prevDay.getTime() - 86400000);
+            }
+            chartDataPool.countAvg.push(Math.round(sumDay / 7));
             chartDataPool.categories.push(k.substring(4));
             chartDataPool.data.push(townPool[cityKey]['days'][k]);
         }
@@ -155,12 +173,26 @@ function showOdCharts(cityKey) {
     }
     chart1 = new ApexCharts(document.querySelector('#odChart1'), {
         chart: {
-            type: 'bar'
+            height: 300,
+            type: 'line'
         },
         series: [{
-            name: '確診人數',
-            data: chartDataPool.data
-        }],
+                name: '確診人數',
+                type: 'column',
+                data: chartDataPool.data
+            },
+            {
+                name: '7日平均',
+                type: 'line',
+                data: chartDataPool.countAvg,
+            }
+        ],
+        stroke: {
+            width: [0, 3]
+        },
+        title: {
+            text: '每日確診'
+        },
         xaxis: {
             categories: chartDataPool.categories
         }
@@ -234,7 +266,7 @@ var mapStyle = 'countBased';
 
 function cityStyle(f) {
     var p = f.getProperties();
-    var color = 'rgba(255,255,255,0.5)';
+    var color = '#ffffff';
     var strokeWidth = 1;
     if (f === currentFeature) {
         strokeWidth = 5;
@@ -246,29 +278,25 @@ function cityStyle(f) {
         if (cityMeta[cityKey] && cityMeta[cityKey].confirmed) {
             keyRate = cityMeta[cityKey].rate;
         }
-        if (keyRate > 10) {
-            color = 'rgba(153,52,4,0.6)';
-        } else if (keyRate > 5) {
-            color = 'rgba(217,95,14,0.6)';
-        } else if (keyRate > 1) {
-            color = 'rgba(254,153,41,0.6)';
-        } else if (keyRate > 0) {
-            color = 'rgba(254,217,142,0.6)';
-        }
-
     } else {
         if (cityMeta[cityKey]) {
             keyRate = cityMeta[cityKey].increaseRate;
         }
-        if (keyRate > 0.9) {
-            color = 'rgba(153,52,4,0.6)';
-        } else if (keyRate > 0.5) {
-            color = 'rgba(217,95,14,0.6)';
-        } else if (keyRate > 0.2) {
-            color = 'rgba(254,153,41,0.6)';
-        } else if (keyRate > 0) {
-            color = 'rgba(254,217,142,0.6)';
-        }
+    }
+    if (keyRate > 50) {
+        color = '#470115';
+    } else if (keyRate > 20) {
+        color = '#6f006d';
+    } else if (keyRate > 10) {
+        color = '#a4005b';
+    } else if (keyRate > 5) {
+        color = '#d00b33';
+    } else if (keyRate > 3) {
+        color = '#e75033';
+    } else if (keyRate > 1) {
+        color = '#ffa133';
+    } else if (keyRate > 0) {
+        color = '#e3d738';
     }
     var baseStyle = new ol.style.Style({
         stroke: new ol.style.Stroke({
@@ -281,7 +309,7 @@ function cityStyle(f) {
         text: new ol.style.Text({
             font: '14px "Open Sans", "Arial Unicode MS", "sans-serif"',
             fill: new ol.style.Fill({
-                color: 'rgba(176,0,25,1)'
+                color: '#388ae3'
             })
         })
     });
@@ -370,7 +398,7 @@ $('#btn-pointShow').click(function() {
 var townKeys = {};
 var currentDay = '';
 var populationDone = false;
-$.get('data/2021.json', {}, function(r) {
+$.get('data/confirmed/2021.json', {}, function(r) {
     showDayPool[r.meta.day] = r;
     showDayUpdate(showDayPool[r.meta.day]);
 
@@ -379,7 +407,7 @@ $.get('data/2021.json', {}, function(r) {
             if (cityMeta[c[code].area]) {
                 cityMeta[c[code].area].population = c[code].population;
                 if (cityMeta[c[code].area].confirmed > 0) {
-                    cityMeta[c[code].area].rate = Math.round(cityMeta[c[code].area].confirmed / cityMeta[c[code].area].population * 100000) / 10;
+                    cityMeta[c[code].area].rate = Math.round(cityMeta[c[code].area].confirmed / cityMeta[c[code].area].population * 1000000) / 100;
                 }
             }
         }
@@ -393,6 +421,7 @@ var showDayPool = {};
 function showDayUpdate(r) {
     for (k in cityMeta) {
         cityMeta[k].confirmed = 0;
+        cityMeta[k].increase = 0;
         cityMeta[k].rate = 0.0;
         cityMeta[k].increaseRate = 0.0;
     }
@@ -448,20 +477,22 @@ function showDayUpdate(r) {
             cityMeta[cityKey].confirmed = c[c1][c2];
             cityMeta[cityKey].increaseRate = r.rate[c1][c2];
             cityMeta[cityKey].increase = r.increase[c1][c2];
-            cityMeta[cityKey].rate = Math.round(cityMeta[cityKey].confirmed / cityMeta[cityKey].population * 100000) / 10;
-            if (populationDone) {
-                city.getSource().refresh();
-            }
+            cityMeta[cityKey].rate = Math.round(cityMeta[cityKey].confirmed / cityMeta[cityKey].population * 1000000) / 100;
         }
+    }
+    if (populationDone) {
+        city.getSource().refresh();
     }
 }
 
 function showDay(theDay) {
     $('#showingDay').html(theDay);
     if (!showDayPool[theDay]) {
-        $.get('data/confirmed/' + theDay + '.json', {}, function(r) {
-            showDayPool[theDay] = r;
-            showDayUpdate(showDayPool[theDay]);
+        $.getJSON('data/confirmed/' + theDay + '.json', {}, function(r) {
+            showDayPool[r.meta.day] = r;
+            showDayUpdate(showDayPool[r.meta.day]);
+        }).fail(function() {
+            dayEnd.setTime(dayEnd.getTime() - 86400000);
         });
     } else {
         showDayUpdate(showDayPool[theDay]);
@@ -476,18 +507,7 @@ $('a#btn-Previous').click(function(e) {
     var cDay = new Date(currentDay.substring(0, 4), parseInt(currentDay.substring(4, 6)) - 1, parseInt(currentDay.substring(6, 8)));
     var newDay = new Date(cDay.getTime() - 86400000);
     if (newDay.getTime() > dayBegin.getTime()) {
-        var ymd = {
-            y: newDay.getFullYear(),
-            m: newDay.getMonth() + 1,
-            d: newDay.getDate()
-        };
-        if (ymd.m < 10) {
-            ymd.m = '0' + ymd.m;
-        }
-        if (ymd.d < 10) {
-            ymd.d = '0' + ymd.d;
-        }
-        showDay('' + ymd.y + ymd.m + ymd.d);
+        showDay(getYMD(newDay));
     }
 });
 
@@ -496,34 +516,27 @@ $('a#btn-Next').click(function(e) {
     var cDay = new Date(currentDay.substring(0, 4), parseInt(currentDay.substring(4, 6)) - 1, parseInt(currentDay.substring(6, 8)));
     var newDay = new Date(cDay.getTime() + 86400000);
     if (newDay.getTime() < dayEnd.getTime()) {
-        var ymd = {
-            y: newDay.getFullYear(),
-            m: newDay.getMonth() + 1,
-            d: newDay.getDate()
-        };
-        if (ymd.m < 10) {
-            ymd.m = '0' + ymd.m;
-        }
-        if (ymd.d < 10) {
-            ymd.d = '0' + ymd.d;
-        }
-        showDay('' + ymd.y + ymd.m + ymd.d);
+        showDay(getYMD(newDay));
     } else {
         newDay.setTime(dayBegin.getTime());
-        var ymd = {
-            y: newDay.getFullYear(),
-            m: newDay.getMonth() + 1,
-            d: newDay.getDate()
-        };
-        if (ymd.m < 10) {
-            ymd.m = '0' + ymd.m;
-        }
-        if (ymd.d < 10) {
-            ymd.d = '0' + ymd.d;
-        }
-        showDay('' + ymd.y + ymd.m + ymd.d);
+        showDay(getYMD(newDay));
     }
 });
+
+function getYMD(theTime) {
+    var ymd = {
+        y: theTime.getFullYear(),
+        m: theTime.getMonth() + 1,
+        d: theTime.getDate()
+    };
+    if (ymd.m < 10) {
+        ymd.m = '0' + ymd.m;
+    }
+    if (ymd.d < 10) {
+        ymd.d = '0' + ymd.d;
+    }
+    return '' + ymd.y + ymd.m + ymd.d;
+}
 
 $('a#btn-countBased').click(function(e) {
     e.preventDefault();
