@@ -268,39 +268,85 @@ function cityStyle(f) {
     var p = f.getProperties();
     var color = '#ffffff';
     var strokeWidth = 1;
+    var strokeColor = 'rgba(0,0,0,0.3)';
     if (f === currentFeature) {
-        strokeWidth = 5;
+        strokeColor = 'rgba(0,0,0,1)';
+        strokeWidth = 2;
     }
     var cityKey = p.COUNTYNAME + p.TOWNNAME;
     var keyRate = 0.0;
+    var textColor = '#000000';
 
-    if (mapStyle === 'countBased') {
-        if (cityMeta[cityKey] && cityMeta[cityKey].confirmed) {
-            keyRate = cityMeta[cityKey].rate;
-        }
-    } else {
-        if (cityMeta[cityKey]) {
-            keyRate = cityMeta[cityKey].increaseRate;
-        }
+    switch (mapStyle) {
+        case 'countBased':
+            if (cityMeta[cityKey] && cityMeta[cityKey].confirmed) {
+                keyRate = cityMeta[cityKey].rate;
+            }
+            if (keyRate > 50) {
+                color = '#470115';
+            } else if (keyRate > 20) {
+                color = '#6f006d';
+            } else if (keyRate > 10) {
+                color = '#a4005b';
+            } else if (keyRate > 5) {
+                color = '#d00b33';
+            } else if (keyRate > 3) {
+                color = '#e75033';
+            } else if (keyRate > 1) {
+                color = '#ffa133';
+            } else if (keyRate > 0) {
+                color = '#e3d738';
+            }
+            break;
+        case 'rateBased':
+            if (cityMeta[cityKey]) {
+                keyRate = cityMeta[cityKey].increaseRate;
+            }
+            if (keyRate > 50) {
+                color = '#470115';
+            } else if (keyRate > 20) {
+                color = '#6f006d';
+            } else if (keyRate > 10) {
+                color = '#a4005b';
+            } else if (keyRate > 5) {
+                color = '#d00b33';
+            } else if (keyRate > 3) {
+                color = '#e75033';
+            } else if (keyRate > 1) {
+                color = '#ffa133';
+            } else if (keyRate > 0) {
+                color = '#e3d738';
+            }
+            break;
+        case 'avgBased':
+            if (cityMeta[cityKey]) {
+                keyRate = cityMeta[cityKey].avg7;
+            }
+            if (keyRate > 50) {
+                color = '#470115';
+            } else if (keyRate > 20) {
+                color = '#6f006d';
+            } else if (keyRate > 10) {
+                color = '#a4005b';
+            } else if (keyRate > 5) {
+                color = '#d00b33';
+            } else if (keyRate > 3) {
+                color = '#e75033';
+            } else if (keyRate > 1) {
+                color = '#ffa133';
+            } else if (keyRate > 0) {
+                color = '#e3d738';
+            }
+            break;
     }
-    if (keyRate > 50) {
-        color = '#470115';
-    } else if (keyRate > 20) {
-        color = '#6f006d';
-    } else if (keyRate > 10) {
-        color = '#a4005b';
-    } else if (keyRate > 5) {
-        color = '#d00b33';
-    } else if (keyRate > 3) {
-        color = '#e75033';
-    } else if (keyRate > 1) {
-        color = '#ffa133';
-    } else if (keyRate > 0) {
-        color = '#e3d738';
+
+    if (keyRate > 5) {
+        textColor = '#ffffff';
     }
+
     var baseStyle = new ol.style.Style({
         stroke: new ol.style.Stroke({
-            color: 'rgba(0,0,0,0.8)',
+            color: strokeColor,
             width: strokeWidth
         }),
         fill: new ol.style.Fill({
@@ -309,23 +355,33 @@ function cityStyle(f) {
         text: new ol.style.Text({
             font: '14px "Open Sans", "Arial Unicode MS", "sans-serif"',
             fill: new ol.style.Fill({
-                color: '#388ae3'
+                color: textColor
             })
         })
     });
 
-    if (mapStyle === 'countBased') {
-        if (cityMeta[cityKey]) {
-            baseStyle.getText().setText(p.TOWNNAME + ' ' + cityMeta[cityKey].confirmed.toString() + "\n(" + keyRate.toString() + ')');
-        } else {
-            baseStyle.getText().setText(p.TOWNNAME + ' 0');
-        }
-    } else {
-        if (keyRate != 0) {
-            baseStyle.getText().setText(p.TOWNNAME + ' ' + cityMeta[cityKey].increase.toString() + "\n(" + keyRate.toString() + ')');
-        } else {
-            baseStyle.getText().setText(p.TOWNNAME + ' 0');
-        }
+    switch (mapStyle) {
+        case 'countBased':
+            if (cityMeta[cityKey]) {
+                baseStyle.getText().setText(p.TOWNNAME + ' ' + cityMeta[cityKey].confirmed.toString() + "\n(" + keyRate.toString() + ')');
+            } else {
+                baseStyle.getText().setText(p.TOWNNAME + ' 0');
+            }
+            break;
+        case 'rateBased':
+            if (keyRate != 0) {
+                baseStyle.getText().setText(p.TOWNNAME + ' ' + cityMeta[cityKey].increase.toString() + "\n(" + keyRate.toString() + ')');
+            } else {
+                baseStyle.getText().setText(p.TOWNNAME + ' 0');
+            }
+            break;
+        case 'avgBased':
+            if (keyRate != 0) {
+                baseStyle.getText().setText(p.TOWNNAME + ' ' + cityMeta[cityKey].avg7.toString() + "\n(" + keyRate.toString() + ')');
+            } else {
+                baseStyle.getText().setText(p.TOWNNAME + ' 0');
+            }
+            break;
     }
     return baseStyle;
 }
@@ -424,6 +480,7 @@ function showDayUpdate(r) {
         cityMeta[k].increase = 0;
         cityMeta[k].rate = 0.0;
         cityMeta[k].increaseRate = 0.0;
+        cityMeta[k].avg7 = 0.0;
     }
     $('span#metaDay').html(r.meta.day);
     $('span#mapDataDay').html(r.meta.day);
@@ -472,12 +529,16 @@ function showDayUpdate(r) {
                     rate: 0.0,
                     increaseRate: 0.0,
                     increase: 0,
+                    avg7: 0.0,
                 };
             }
             cityMeta[cityKey].confirmed = c[c1][c2];
             cityMeta[cityKey].increaseRate = r.rate[c1][c2];
             cityMeta[cityKey].increase = r.increase[c1][c2];
             cityMeta[cityKey].rate = Math.round(cityMeta[cityKey].confirmed / cityMeta[cityKey].population * 1000000) / 100;
+            if (r.avg7 && r.avg7[c1] && r.avg7[c1][c2]) {
+                cityMeta[cityKey].avg7 = r.avg7[c1][c2];
+            }
         }
     }
     if (populationDone) {
@@ -542,16 +603,24 @@ $('a#btn-countBased').click(function(e) {
     e.preventDefault();
     mapStyle = 'countBased';
     city.getSource().refresh();
+    $('a.btn-switch').removeClass('btn-primary').addClass('btn-secondary');
     $('a#btn-countBased').removeClass('btn-secondary').addClass('btn-primary');
-    $('a#btn-rateBased').removeClass('btn-primary').addClass('btn-secondary');
 });
 
 $('a#btn-rateBased').click(function(e) {
     e.preventDefault();
     mapStyle = 'rateBased';
     city.getSource().refresh();
-    $('a#btn-countBased').removeClass('btn-primary').addClass('btn-secondary');
+    $('a.btn-switch').removeClass('btn-primary').addClass('btn-secondary');
     $('a#btn-rateBased').removeClass('btn-secondary').addClass('btn-primary');
+});
+
+$('a#btn-avgBased').click(function(e) {
+    e.preventDefault();
+    mapStyle = 'avgBased';
+    city.getSource().refresh();
+    $('a.btn-switch').removeClass('btn-primary').addClass('btn-secondary');
+    $('a#btn-avgBased').removeClass('btn-secondary').addClass('btn-primary');
 });
 
 var dataPlaying = false;
