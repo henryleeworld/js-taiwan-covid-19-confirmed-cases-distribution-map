@@ -459,7 +459,7 @@ $.get('data/confirmed/2021.json', {}, function(r) {
     showDayPool[r.meta.day] = r;
     showDayUpdate(showDayPool[r.meta.day]);
 
-    $.get('data/04.json', {}, function(c) {
+    $.get('data/05.json', {}, function(c) {
         for (code in c) {
             populationPool[c[code].area] = c[code].population;
             if (cityMeta[c[code].area]) {
