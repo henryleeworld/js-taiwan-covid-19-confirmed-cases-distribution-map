@@ -11,8 +11,8 @@ $ git clone
 ----
 
 ## 畫面截圖
-![](https://i.imgur.com/O0pVOda.png)
+![](https://i.imgur.com/I96HCw4.png)
 > 從中可看出各縣市行政區的確診概況
 
-![](https://i.imgur.com/ED8xkSa.png)
+![](https://i.imgur.com/ECxooGu.png)
 > 資料取自疾管署的傳染病統計資料查詢系統
