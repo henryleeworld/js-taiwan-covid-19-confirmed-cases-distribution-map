@@ -442,6 +442,11 @@ $('#btn-geolocation').click(function() {
     return false;
 });
 
+$('#btn-taiwan').click(function() {
+    appView.setCenter(ol.proj.fromLonLat([120.221507, 23.000694]));
+    return false;
+});
+
 $('#btn-pointShow').click(function() {
     if (false === showPoints) {
         showPoints = true;
@@ -455,20 +460,46 @@ var townKeys = {};
 var currentDay = '';
 var populationDone = false;
 var populationPool = {};
+var rateList = [];
 $.get('data/confirmed/2021.json', {}, function(r) {
     showDayPool[r.meta.day] = r;
     showDayUpdate(showDayPool[r.meta.day]);
 
-    $.get('data/05.json', {}, function(c) {
+    $.get('data/06.json', {}, function(c) {
         for (code in c) {
             populationPool[c[code].area] = c[code].population;
             if (cityMeta[c[code].area]) {
                 cityMeta[c[code].area].population = c[code].population;
                 if (cityMeta[c[code].area].confirmed > 0 && cityMeta[c[code].area].population > 0) {
                     cityMeta[c[code].area].rate = Math.round(cityMeta[c[code].area].confirmed / cityMeta[c[code].area].population * 1000000) / 100;
+                    rateList.push({
+                        area: c[code].area,
+                        rate: cityMeta[c[code].area].rate,
+                        cases: cityMeta[c[code].area].confirmed
+                    });
+                } else {
+                    rateList.push({
+                        area: c[code].area,
+                        rate: 0.0,
+                        cases: 0
+                    });
                 }
             }
         }
+        rateList.sort(function(a, b) {
+            return b.rate - a.rate;
+        });
+        let listTable = '<table class="table table-bordered">';
+        listTable += '<tr><th>區域</th><th>每萬人口比率</th><th>確診數</th></tr>';
+        for (k in rateList) {
+            listTable += '<tr>';
+            listTable += '<td>' + rateList[k].area + '</td>';
+            listTable += '<td>' + rateList[k].rate + '</td>';
+            listTable += '<td>' + rateList[k].cases + '</td>';
+            listTable += '</tr>';
+        }
+        listTable += '</table>';
+        $('#listContent').html(listTable);
         populationDone = true;
         city.getSource().refresh();
     })
