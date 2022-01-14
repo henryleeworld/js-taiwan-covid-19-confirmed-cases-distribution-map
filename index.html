@@ -58,7 +58,7 @@
                             <tr>
                                 <td colspan="2">
                                     <ul>
-                                        <li>本系統只有顯示 2021 以來病例數</li>
+                                        <li>本系統只有顯示 2022 以來病例數</li>
                                         <li>數字一般會比指揮中心通報延遲一天</li>
                                     </ul>
                                 </td>
@@ -72,21 +72,63 @@
                 </div>
             </div>
             <div class="sidebar-pane" id="book">
-                <h1 class="sidebar-header"><span id="weekTitle">說明</span><span class="sidebar-close"><i class="fa fa-caret-left"></i></span></h1>
+                <h1 class="sidebar-header">
+                    <span>說明</span>
+                    <span class="sidebar-close">
+                        <i class="fa fa-caret-left"></i>
+                    </span>
+                </h1>
                 <div>
                     資料來源：
                     <ul>
-                        <li><a href="https://nidss.cdc.gov.tw/nndss/DiseaseMap?id=19CoV" target="_blank">傳染病統計資料查詢系統</a></li>
+                        <li><a href="https://data.gov.tw/dataset/120711"
+                                target="_blank">地區年齡性別統計表-嚴重特殊傳染性肺炎-依個案研判日統計</a></li>
+                        <li><a href="https://data.cdc.gov.tw/dataset/aagstable-day-19cov"
+                                target="_blank">地區年齡性別統計表-嚴重特殊傳染性肺炎(以日為單位) </a></li>
+
+                        <li><a href="https://data.gov.tw/dataset/131138" target="_blank">各村（里）人口統計月報表（含同婚）</a></li>
+                        <li><a href="https://data.gov.tw/dataset/7441" target="_blank">鄉鎮市區界線(TWD97經緯度)</a></li>
+                        <li><a href="https://data.gov.tw/dataset/7442" target="_blank">直轄市、縣市界線(TWD97經緯度)</a></li>
                     </ul>
                     * 資料每天更新
                 </div>
             </div>
             <div class="sidebar-pane" id="settings">
-                <h1 class="sidebar-header"><span id="weekTitle">設定</span><span class="sidebar-close"><i class="fa fa-caret-left"></i></span></h1>
+                <h1 class="sidebar-header"><span>設定</span><span class="sidebar-close"><i
+                            class="fa fa-caret-left"></i></span></h1>
                 <div>
                     <a href="#" class="btn btn-primary btn-lg btn-block" id="btn-geolocation">回到目前位置</a>
-                    <p><hr /></p>
+                    <a href="#" class="btn btn-primary btn-lg btn-block" id="btn-taiwan">回到台灣</a>
+                    <a href="#" class="btn btn-primary btn-lg btn-block" id="btn-pointShow">切換篩檢站</a>
+                    <p>
+                        <hr />
+                    </p>
                 </div>
+                <div class="btn-group btn-block">
+                    <a href="#" class="btn btn-primary btn-lg" id="btn-Previous"> &lt;&lt; 前一天</a>
+                    <a href="#" class="btn btn-primary btn-lg" id="btn-Next">後一天 &gt;&gt; </a>
+                </div>
+                <div id="showingDay"></div>
+                <hr />
+                <div class="btn-group btn-block">
+                    <a href="#" class="btn btn-secondary btn-lg" id="btn-play">播放</a>
+                    <a href="#" class="btn btn-primary btn-lg" id="btn-pause">暫停</a>
+                </div>
+                <hr />
+                <div class="btn-group btn-block">
+                    <a href="#" class="btn btn-primary btn-lg btn-switch" id="btn-countBased">累積數</a>
+                    <a href="#" class="btn btn-secondary btn-lg btn-switch" id="btn-rateBased">增加率</a>
+                    <a href="#" class="btn btn-secondary btn-lg btn-switch" id="btn-avgBased">7日平均</a>
+                </div>
+            </div>
+            <div class="sidebar-pane" id="list">
+                <h1 class="sidebar-header">
+                    <span>萬人確診率排行</span>
+                    <span class="sidebar-close">
+                        <i class="fa fa-caret-left"></i>
+                    </span>
+                </h1>
+                <div id="listContent"></div>
             </div>
         </div>
     </div>

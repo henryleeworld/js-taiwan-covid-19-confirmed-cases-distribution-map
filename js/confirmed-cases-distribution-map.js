@@ -10,6 +10,7 @@ var size = ol.extent.getWidth(projectionExtent) / 256;
 var resolutions = new Array(20);
 var matrixIds = new Array(20);
 for (var z = 0; z < 20; ++z) {
+    // generate resolutions and matrixIds arrays for this WMTS
     resolutions[z] = size / Math.pow(2, z);
     matrixIds[z] = z;
 }
@@ -461,7 +462,7 @@ var currentDay = '';
 var populationDone = false;
 var populationPool = {};
 var rateList = [];
-$.get('data/confirmed/2021.json', {}, function(r) {
+$.get('data/confirmed/2022.json', {}, function(r) {
     showDayPool[r.meta.day] = r;
     showDayUpdate(showDayPool[r.meta.day]);
 
