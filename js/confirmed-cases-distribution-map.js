@@ -23,17 +23,6 @@ var appView = new ol.View({
     zoom: 14
 });
 
-var vectorPoints = new ol.layer.Vector({
-    source: new ol.source.Vector({
-        url: 'data/points.json',
-        format: new ol.format.GeoJSON({
-            featureProjection: appView.getProjection()
-        })
-    }),
-    style: pointStyle,
-    zIndex: 100
-});
-
 var attribution = new ol.control.Attribution({
     collapsible: false,
     collapsed: true
@@ -52,7 +41,7 @@ var city = new ol.layer.Vector({
 });
 
 var map = new ol.Map({
-    layers: [city, vectorPoints],
+    layers: [city],
     target: 'map',
     view: appView,
     controls: ol.control.defaults({
@@ -89,15 +78,15 @@ map.on('singleclick', function(evt) {
             var message = '';
             if (p.COUNTYNAME) {
                 var cityKey = p.COUNTYNAME + p.TOWNNAME;
+                sidebarTitle.innerHTML = cityKey;
+                currentFeature.setStyle(cityStyle);
+                lastFeatureType = 'area';
                 if (cityMeta[cityKey]) {
                     message += '<table class="table table-dark"><tbody>';
                     message += '<tr><th scope="row">確診數量</th><td>' + cityMeta[cityKey].confirmed + '</td></tr>';
                     message += '<tr><th scope="row">人口</th><td>' + cityMeta[cityKey].population + '</td></tr>';
                     message += '<tr><th scope="row">比率</th><td>' + cityMeta[cityKey].rate + '(每萬人口)</td></tr>';
                     message += '</tbody></table>';
-                    sidebarTitle.innerHTML = p.COUNTYNAME + p.TOWNNAME;
-                    currentFeature.setStyle(cityStyle);
-                    lastFeatureType = 'area';
 
                     if (!townPool[cityKey]) {
                         $.getJSON('data/town/' + townKeys[cityKey] + '.json', {}, function(r) {
@@ -107,8 +96,13 @@ map.on('singleclick', function(evt) {
                     } else {
                         showOdCharts(cityKey);
                     }
+                } else {
+                    message += '<table class="table table-dark"><tbody>';
+                    message += '<tr><th scope="row">確診數量</th><td>0</td></tr>';
+                    message += '<tr><th scope="row">人口</th><td>' + populationPool[cityKey] + '</td></tr>';
+                    message += '<tr><th scope="row">比率</th><td>0(每萬人口)</td></tr>';
+                    message += '</tbody></table>';
                 }
-
             } else {
                 message += '<table class="table table-dark"><tbody>';
                 for (k in p) {
@@ -264,31 +258,44 @@ function pointStyle(f) {
 
 var colorTable = {
     'countBased': [
-        [50, '#470115'],
-        [20, '#6f006d'],
-        [10, '#a4005b'],
-        [5, '#d00b33'],
-        [3, '#e75033'],
-        [1, '#ffa133'],
-        [0, '#e3d738']
+        [800, '#470617'],
+        [400, '#5f0926'],
+        [200, '#64036b'],
+        [100, '#75008b'],
+        [50, '#af004f'],
+        [20, '#d21a34'],
+        [10, '#ec6234'],
+        [5, '#ffa133'],
+        [3, '#ffd02c'],
+        [1, '#fffb26'],
+        [0, '#89cd43']
     ],
     'rateBased': [
-        [20, '#470115'],
-        [10, '#6f006d'],
-        [5, '#a4005b'],
-        [2, '#d00b33'],
-        [0.5, '#e75033'],
-        [0.2, '#ffa133'],
-        [0, '#e3d738']
+        [800, '#470617'],
+        [400, '#5f0926'],
+        [200, '#64036b'],
+        [100, '#75008b'],
+        [50, '#af004f'],
+        [20, '#af004f'],
+        [10, '#d21a34'],
+        [5, '#ec6234'],
+        [2, '#ffa133'],
+        [0.5, '#ffd02c'],
+        [0.2, '#fffb26'],
+        [0, '#89cd43']
     ],
     'avgBased': [
-        [50, '#470115'],
-        [20, '#6f006d'],
-        [10, '#a4005b'],
-        [5, '#d00b33'],
-        [3, '#e75033'],
-        [1, '#ffa133'],
-        [0, '#e3d738']
+        [800, '#470617'],
+        [400, '#5f0926'],
+        [200, '#64036b'],
+        [100, '#75008b'],
+        [50, '#af004f'],
+        [20, '#d21a34'],
+        [10, '#ec6234'],
+        [5, '#ffa133'],
+        [3, '#ffd02c'],
+        [1, '#fffb26'],
+        [0, '#89cd43']
     ]
 };
 
@@ -445,15 +452,6 @@ $('#btn-taiwan').click(function() {
     return false;
 });
 
-$('#btn-pointShow').click(function() {
-    if (false === showPoints) {
-        showPoints = true;
-    } else {
-        showPoints = false;
-    }
-    vectorPoints.getSource().refresh();
-});
-
 var townKeys = {};
 var currentDay = '';
 var populationDone = false;
@@ -585,21 +583,37 @@ function showDayUpdate(r) {
 function showDay(theDay) {
     $('#showingDay').html(theDay);
     if (!showDayPool[theDay]) {
-        $.getJSON('data/od/confirmed/' + theDay + '.json', {}, function(r) {
+        $.getJSON('data/confirmed/' + theDay + '.json', {}, function(r) {
             showDayPool[r.meta.day] = r;
             showDayUpdate(showDayPool[r.meta.day]);
         }).fail(function() {
-            dayEnd.setTime(dayEnd.getTime() - 86400000);
+            if (false === btnClicked) {
+                dayEnd.setTime(dayEnd.getTime() - 86400000);
+            } else {
+                var cDay = new Date(theDay.substring(0, 4), parseInt(theDay.substring(4, 6)) - 1, parseInt(theDay.substring(6, 8)));
+                var newDay;
+                if ('next' === btnClicked) {
+                    newDay = new Date(cDay.getTime() + 86400000);
+                    currentDay = getYMD(newDay);
+                    showDay(getYMD(newDay));
+                } else {
+                    newDay = new Date(cDay.getTime() - 86400000);
+                    currentDay = getYMD(newDay);
+                    showDay(getYMD(newDay));
+                }
+            }
         });
     } else {
         showDayUpdate(showDayPool[theDay]);
     }
 }
 
+var btnClicked = false;
 var today = new Date();
-var dayBegin = new Date(2021, 2, 30);
+var dayBegin = new Date(2022, 1, 1);
 var dayEnd = new Date(today.getFullYear(), today.getMonth(), today.getDate());
 $('a#btn-Previous').click(function(e) {
+    btnClicked = 'previous';
     e.preventDefault();
     var cDay = new Date(currentDay.substring(0, 4), parseInt(currentDay.substring(4, 6)) - 1, parseInt(currentDay.substring(6, 8)));
     var newDay = new Date(cDay.getTime() - 86400000);
@@ -609,6 +623,7 @@ $('a#btn-Previous').click(function(e) {
 });
 
 $('a#btn-Next').click(function(e) {
+    btnClicked = 'next';
     e.preventDefault();
     var cDay = new Date(currentDay.substring(0, 4), parseInt(currentDay.substring(4, 6)) - 1, parseInt(currentDay.substring(6, 8)));
     var newDay = new Date(cDay.getTime() + 86400000);
