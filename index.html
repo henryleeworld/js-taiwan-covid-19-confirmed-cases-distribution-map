@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta property="og:title" content="台灣武漢肺炎（新型冠狀病毒）確診病例分佈圖" />
+    <meta property="og:description" content="以鄉鎮市區為界線，顯示各行政區名稱以及確診病例數字，括號中則是每萬人口確診率，並依據確診病例多寡呈現不同深淺顏色，從中看出不同縣市行政區的確診病例數字以及比例。" />
+    <meta property="og:locale" content="zh_TW" />
+    <meta property="og:type" content="website" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ol3/4.6.5/ol.css" integrity="sha512-D2c/nmSVlwoZk29SLwJK8GkLyCyPuNbZ/vZQL/lNzw+o+yXzsbnJt7lK/iCfdBmgyLRDi0qx27gpE8Zb1C6I7g==" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sidebar-v2@0.4.0/css/ol3-sidebar.min.css" type="text/css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.0/css/bootstrap.min.css" integrity="sha512-t4GWSVZO1eC8BM339Xd7Uphw5s17a86tIZIj8qRxhnKub6WoyhnrxeCIMeAqBPgdZGlCcG2PrZjMc+Wr78+5Xg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="css/confirmed-cases-distribution-map.css" type="text/css">
+    <title>台灣武漢肺炎（新型冠狀病毒）確診病例分佈圖</title>
+</head>
+<body>
+    <div id="sidebar" class="sidebar collapsed">
+        <div class="sidebar-tabs">
+            <ul role="tablist">
+                <li><a href="#home" role="tab"><i class="fas fa-bars"></i></a></li>
+                <li><a href="#book" role="tab"><i class="fas fa-book"></i></a></li>
+                <li><a href="#settings" role="tab"><i class="fas fa-cog"></i></a></li>
+                <li><a href="https://github.com/henryleeworld/js-taiwan-covid-19-confirmed-cases-distribution-map" role="tab" target="_blank"><i class="fab fa-github"></i></a></li>
+            </ul>
+        </div>
+        <div class="sidebar-content">
+            <div class="sidebar-pane" id="home">
+                <h1 class="sidebar-header">
+                    <span id="sidebarTitle">請點選地圖中的點</span>
+                    <span class="sidebar-close"><i class="fa fa-caret-left"></i></span>
+                </h1>
+                <div id="sidebarContent">請點選地圖中的點</div>
+                <hr />
+                <div id="odChart1"></div>
+                <div id="odChart2"></div>
+                <div id="odChart3"></div>
+                <div>
+                    <table class="table table-dark">
+                        <tbody>
+                            <tr>
+                                <th scope="row" colspan="2" style="text-align: center;">系統摘要</th>
+                            </tr>
+                            <tr>
+                                <th scope="row">資料時間</th>
+                                <td><span id="metaDay"></span></td>
+                            </tr>
+                            <tr>
+                                <th scope="row">全國總數</th>
+                                <td><span id="metaTotal"></span></td>
+                            </tr>
+                            <tr>
+                                <th scope="row">異動時間</th>
+                                <td><span id="metaModified"></span></td>
+                            </tr>
+                            <tr>
+                                <td colspan="2">
+                                    <ul>
+                                        <li>本系統只有顯示 2022 以來病例數</li>
+                                        <li>數字一般會比指揮中心通報延遲一天</li>
+                                        <li>增加率是以今日增加數除以累計數字的比率</li>
+                                    </ul>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <hr />
+                <div class="btn-group-vertical" role="group" style="width: 100%;">
+                    <a href="https://github.com/henryleeworld/js-taiwan-covid-19-confirmed-cases-distribution-map/issues" target="_blank" class="btn btn-primary btn-lg btn-block">網站問題反應</a>
+                </div>
+            </div>
+            <div class="sidebar-pane" id="book">
+                <h1 class="sidebar-header">
+                    <span>說明</span>
+                    <span class="sidebar-close">
+                        <i class="fa fa-caret-left"></i>
+                    </span>
+                </h1>
+                <div>
+                    圖例：
+                    <table class="table table-boarded table-striped" id="colorTable"></table>
+                    資料來源：
+                    <ul>
+                        <li><a href="https://data.gov.tw/dataset/120711"
+                                target="_blank">地區年齡性別統計表-嚴重特殊傳染性肺炎-依個案研判日統計</a></li>
+                        <li><a href="https://data.cdc.gov.tw/dataset/aagstable-day-19cov"
+                                target="_blank">地區年齡性別統計表-嚴重特殊傳染性肺炎(以日為單位) </a></li>
+
+                        <li><a href="https://data.gov.tw/dataset/131138" target="_blank">各村（里）人口統計月報表（含同婚）</a></li>
+                        <li><a href="https://data.gov.tw/dataset/7441" target="_blank">鄉鎮市區界線(TWD97經緯度)</a></li>
+                        <li><a href="https://data.gov.tw/dataset/7442" target="_blank">直轄市、縣市界線(TWD97經緯度)</a></li>
+                    </ul>
+                    * 資料每天更新
+                </div>
+            </div>
+            <div class="sidebar-pane" id="settings">
+                <h1 class="sidebar-header"><span>設定</span><span class="sidebar-close"><i
+                            class="fa fa-caret-left"></i></span></h1>
+                <div>
+                    <a href="#" class="btn btn-primary btn-lg btn-block" id="btn-geolocation">回到目前位置</a>
+                    <a href="#" class="btn btn-primary btn-lg btn-block" id="btn-taiwan">回到台灣</a>
+                    <a href="#" class="btn btn-primary btn-lg btn-block" id="btn-print">列印地圖</a>
+                    <p>
+                        <hr />
+                    </p>
+                </div>
+                <div class="btn-group btn-block">
+                    <a href="#" class="btn btn-primary btn-lg" id="btn-Previous"> &lt;&lt; 前一天</a>
+                    <a href="#" class="btn btn-primary btn-lg" id="btn-Next">後一天 &gt;&gt; </a>
+                </div>
+                <div id="showingDay"></div>
+                <hr />
+                <div class="btn-group btn-block">
+                    <a href="#" class="btn btn-secondary btn-lg" id="btn-play">播放</a>
+                    <a href="#" class="btn btn-primary btn-lg" id="btn-pause">暫停</a>
+                </div>
+                <hr />
+                <div class="btn-group btn-block">
+                    <a href="#" class="btn btn-primary btn-lg btn-switch" id="btn-countBased">累積數</a>
+                    <a href="#" class="btn btn-secondary btn-lg btn-switch" id="btn-rateBased">增加率</a>
+                    <a href="#" class="btn btn-secondary btn-lg btn-switch" id="btn-avgBased">7日平均</a>
+                </div>
+            </div>
+            <div class="sidebar-pane" id="list">
+                <h1 class="sidebar-header">
+                    <span>每平方公里確診率排行</span>
+                    <span class="sidebar-close">
+                        <i class="fa fa-caret-left"></i>
+                    </span>
+                </h1>
+                <div id="listContent"></div>
+            </div>
+        </div>
+    </div>
+    <div id="map" class="sidebar-map"></div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.0/jquery.min.js" integrity="sha512-3gJwYpMe3QewGELv8k/BX9vcqhryRdzRMxVfq6ngyWXwo03GFEzjsUm8Q7RZcHPHksttq7/GFoxjCVUjkjvPdw==" crossorigin="anonymous" referrerpolicy="no-referrer" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" integrity="sha512-BNaRQnYJYiPSqHHDb58B0yaPfCu+Wgds8Gp/gU33kqBtgNS4tSPHuGibyoeqMV/TJlSKda6FXzoEyYGjTe+vXA==" crossorigin="anonymous" referrerpolicy="no-referrer" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" integrity="sha512-qZvrmS2ekKPF2mSznTQsxqPgnpkI4DNTlrdUmTzrDgektczlKNRRhy5X5AAOnx5S09ydFYWWNSfcEqDTTHgtNA==" crossorigin="anonymous" referrerpolicy="no-referrer" defer></script>
+    <script src="js/ol.js" type="text/javascript" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/sidebar-v2@0.4.0/js/ol3-sidebar.min.js" defer></script>
+    <script src="js/confirmed-cases-distribution-map.js" type="text/javascript" defer></script>
+</body>
+</html>
