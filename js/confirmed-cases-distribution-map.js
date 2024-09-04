@@ -86,6 +86,7 @@ map.on('singleclick', function(evt) {
                     message += '<tr><th scope="row">確診數量</th><td>' + cityMeta[cityKey].confirmed + '</td></tr>';
                     message += '<tr><th scope="row">人口</th><td>' + cityMeta[cityKey].population + '</td></tr>';
                     message += '<tr><th scope="row">比率</th><td>' + cityMeta[cityKey].rate + '(每萬人口)</td></tr>';
+                    message += '<tr><td colspan="2" style="text-align:center;"> 每 ' + Math.round(cityMeta[cityKey].population / cityMeta[cityKey].confirmed) + ' 人就有 1 人確診</td></tr>';
                     message += '</tbody></table>';
 
                     if (!townPool[cityKey]) {
@@ -271,17 +272,17 @@ var colorTable = {
         [0, '#89cd43']
     ],
     'rateBased': [
-        [800, '#470617'],
-        [400, '#5f0926'],
-        [200, '#64036b'],
-        [100, '#75008b'],
-        [50, '#af004f'],
-        [20, '#af004f'],
-        [10, '#d21a34'],
-        [5, '#ec6234'],
-        [2, '#ffa133'],
-        [0.5, '#ffd02c'],
-        [0.2, '#fffb26'],
+        [10.24, '#470617'],
+        [5.12, '#5f0926'],
+        [2.56, '#64036b'],
+        [1.28, '#75008b'],
+        [0.64, '#af004f'],
+        [0.32, '#af004f'],
+        [0.16, '#d21a34'],
+        [0.08, '#ec6234'],
+        [0.04, '#ffa133'],
+        [0.02, '#ffd02c'],
+        [0.01, '#fffb26'],
         [0, '#89cd43']
     ],
     'avgBased': [
@@ -467,11 +468,11 @@ var currentDay = '';
 var populationDone = false;
 var populationPool = {};
 var rateList = [];
-$.get('data/confirmed/2023.json', {}, function(r) {
+$.get('data/confirmed/2024.json', {}, function(r) {
     showDayPool[r.meta.day] = r;
     showDayUpdate(showDayPool[r.meta.day]);
 
-    $.get('data/11.json', {}, function(c) {
+    $.get('data/07.json', {}, function(c) {
         for (code in c) {
             populationPool[c[code].area] = c[code].population;
             if (cityMeta[c[code].area]) {
